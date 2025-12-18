@@ -50,8 +50,12 @@ public class ScooterController : MonoBehaviour
         // Make sure sphere is independent
         sphere.transform.parent = null;
         
-        postVolume = Camera.main.GetComponent<PostProcessVolume>();
-        postProfile = postVolume.profile;
+        if (Camera.main != null)
+        {
+            postVolume = Camera.main.GetComponent<PostProcessVolume>();
+            if (postVolume != null)
+                postProfile = postVolume.profile;
+        }
 
         if (wheelParticles != null && wheelParticles.childCount >= 2)
         {
@@ -81,20 +85,6 @@ public class ScooterController : MonoBehaviour
         float h = Input.GetAxis("Horizontal");
         float targetZ = -(h * 15f);
 
-        if (Input.GetKeyDown(KeyCode.Space))
-    {
-        if (Time.timeScale == 1)
-        {
-            Time.timeScale = 0.2f;
-            Time.fixedDeltaTime = 0.02f * 0.2f;  // ✅ Scale physics timestep too
-        }
-        else
-        {
-            Time.timeScale = 1f;
-            Time.fixedDeltaTime = 0.02f;  // ✅ Reset to default (50 FPS)
-        }
-    }
-
         //Follow Collider
         transform.position = sphere.transform.position - new Vector3(0, 0.4f, 0);
 
@@ -123,7 +113,8 @@ public class ScooterController : MonoBehaviour
 
             foreach (ParticleSystem p in primaryParticles)
             {
-                p.startColor = Color.clear;
+                var main = p.main;
+                main.startColor = Color.clear;
                 p.Play();
             }
 
@@ -234,7 +225,8 @@ else
 
         foreach (ParticleSystem p in primaryParticles)
         {
-            p.startColor = Color.clear;
+            var main = p.main;
+            main.startColor = Color.clear;
             p.Stop();
         }
 
@@ -254,7 +246,8 @@ else
         if (driftPower > 50 && driftPower < 100 - 1 && !first)
         {
             first = true;
-            c = turboColors[0];
+            if (turboColors != null && turboColors.Length > 0)
+                c = turboColors[0];
             driftMode = 1;
 
             PlayFlashParticle(c);
@@ -263,7 +256,8 @@ else
         if (driftPower > 100 && driftPower < 150 - 1 && !second)
         {
             second = true;
-            c = turboColors[1];
+            if (turboColors != null && turboColors.Length > 1)
+                c = turboColors[1];
             driftMode = 2;
 
             PlayFlashParticle(c);
@@ -272,7 +266,8 @@ else
         if (driftPower > 150 && !third)
         {
             third = true;
-            c = turboColors[2];
+            if (turboColors != null && turboColors.Length > 2)
+                c = turboColors[2];
             driftMode = 3;
 
             PlayFlashParticle(c);
@@ -316,6 +311,11 @@ else
 
     void ChromaticAmount(float x)
     {
-        postProfile.GetSetting<ChromaticAberration>().intensity.value = x;
+        if (postProfile != null)
+        {
+            var chromaticAberration = postProfile.GetSetting<ChromaticAberration>();
+            if (chromaticAberration != null)
+                chromaticAberration.intensity.value = x;
+        }
     }
 }
