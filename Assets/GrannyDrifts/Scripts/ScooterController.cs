@@ -81,19 +81,32 @@ public class ScooterController : MonoBehaviour
         float h = Input.GetAxis("Horizontal");
         float targetZ = -(h * 15f);
 
-        if (Input.GetKey(KeyCode.Space))
+        if (Input.GetKeyDown(KeyCode.Space))
+    {
+        if (Time.timeScale == 1)
         {
-            float time = Time.timeScale == 1 ? .2f : 1;
-            Time.timeScale = time;
+            Time.timeScale = 0.2f;
+            Time.fixedDeltaTime = 0.02f * 0.2f;  // ✅ Scale physics timestep too
         }
+        else
+        {
+            Time.timeScale = 1f;
+            Time.fixedDeltaTime = 0.02f;  // ✅ Reset to default (50 FPS)
+        }
+    }
 
         //Follow Collider
         transform.position = sphere.transform.position - new Vector3(0, 0.4f, 0);
 
-        //Accelerate
-        if (Input.GetButton("Fire1"))
+       //Accelerate
+        if (Input.GetKey(KeyCode.W))
             speed = acceleration;
+        else
+            speed = 0f;  // Only reset when NOT pressing W
 
+        currentSpeed = Mathf.SmoothStep(currentSpeed, speed, Time.deltaTime * 12f);
+        currentRotate = Mathf.Lerp(currentRotate, rotate, Time.deltaTime * 4f); 
+        rotate = 0f;
         //Steer
         if (Input.GetAxis("Horizontal") != 0)
         {
@@ -145,17 +158,21 @@ if (!drifting)
 
     Quaternion targetRot = Quaternion.Euler(0f, 0f, targetZ);
 
-    scooterModel.localRotation = Quaternion.Lerp(
-        scooterModel.localRotation,
-        targetRot,
-        0.2f
+   scooterModel.localRotation = Quaternion.Lerp(
+    scooterModel.localRotation,
+    targetRot,
+    Time.deltaTime * 5f  // ✅ Frame-rate independent
     );
 }
 
 else
 {
     float control = (driftDirection == 1) ? ExtensionMethods.Remap(Input.GetAxis("Horizontal"), -1, 1, .5f, 2) : ExtensionMethods.Remap(Input.GetAxis("Horizontal"), -1, 1, 2, .5f);
-    scooterModel.parent.localRotation = Quaternion.Lerp(scooterModel.parent.localRotation, Quaternion.Euler(0, 0, -((control * 15) * driftDirection)), .2f);
+    scooterModel.parent.localRotation = Quaternion.Lerp(
+    scooterModel.parent.localRotation, 
+    Quaternion.Euler(0, 0, -((control * 15) * driftDirection)), 
+    Time.deltaTime * 5f  // ✅ Frame-rate independent
+);
 }
 
         // Wheel animations - commented out
